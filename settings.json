@@ -1,0 +1,12 @@
+{
+	"page_title": "Trollheimen 2019",
+	"map_initial_latitude": 62.78300,
+	"map_initial_longitude": 9.31366,
+	"map_initial_zoom": 10,
+	"markers": [
+		{ "name": "Gjevilvasshytta", "lat": 62.69847, "lon": 9.42003, "icon": "home" },
+		{ "name": "Vassendsetra", "lat": 62.71342, "lon": 9.19517, "icon": "home" },
+		{ "name": "Trollheimshytta", "lat": 62.82900, "lon": 9.23982, "icon": "home" },
+		{ "name": "Jøldalshytta", "lat": 62.86213, "lon": 9.50897, "icon": "home" }
+	]
+}
