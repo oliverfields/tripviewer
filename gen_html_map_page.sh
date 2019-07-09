@@ -23,7 +23,7 @@ mkdir "$dist_media_thumb_dir"
 
 
 # Create json and image files to use to add markers
-function prepare_pois() {
+function prepare_media() {
 	json=""
 
 	# For media files get their location and create stuff for making markers
@@ -93,7 +93,7 @@ function prepare_pois() {
 	echo "[$json]"
 }
 
-pois_json="$(prepare_pois)"
+media_json="$(prepare_media)"
 
 # Create download archive
 #cwd="$PWD"
@@ -102,6 +102,14 @@ pois_json="$(prepare_pois)"
 #cd "$cwd"
 #mv "$dist_media_dir"/download.zip "$dist_dir"
 
+# Optimize media files
+shopt -s nocaseglob # Enable case insensitive globbing
+# Reduce image size
+mogrify -resize 1920x1080\> "$dist_media_dir"/*.jpg
+# Strip exif data
+exiftool -all= *.jpg
+exiftool -all= *.mov
+shopt -u nocaseglob
 
 settings="$(<settings.json)"
 
@@ -197,12 +205,12 @@ new L.GPX(gpx, {async: true, polyline_options: {
 //https://github.com/xguaita/Leaflet.MapCenterCoord
 L.control.mapCenterCoord().addTo(map);
 
-var pois = $pois_json;
+var media = $media_json;
 
-for (var i = 0; i < pois.length; i++) {
+for (var i = 0; i < media.length; i++) {
 
 	var thumbIcon = L.icon({
-		iconUrl: pois[i]['thumb'],
+		iconUrl: media[i]['thumb'],
 		iconSize: [40, 40],
 		iconAnchor:   [20, 20], // point of the icon which will correspond to marker's location
 		shadowUrl: 'images/thumb-shadow.png',
@@ -211,17 +219,17 @@ for (var i = 0; i < pois.length; i++) {
 	});
 
 	L.marker(
-		[pois[i]['lat'], pois[i]['lon']],
+		[media[i]['lat'], media[i]['lon']],
 		{icon: thumbIcon}
 	).addTo(media).on('click', function(e) {open_media(this);});
 }
 
 // Get click event and use onclick event to figure out what json src url to open based on thumbnail src url
 function open_media(obj){
-	for (var i = 0; i < pois.length; i++) {
-		if(obj['_icon']['src'].endsWith(pois[i]['thumb'])) {
-			//window.location = pois[i]['src'];
-			window.open(pois[i]['src']);
+	for (var i = 0; i < media.length; i++) {
+		if(obj['_icon']['src'].endsWith(media[i]['thumb'])) {
+			//window.location = media[i]['src'];
+			window.open(media[i]['src']);
 			break;
 		}
 	}
