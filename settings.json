@@ -4,9 +4,12 @@
 	"map_initial_longitude": -15.58926,
 	"map_initial_zoom": 10,
 	"markers": [
-		{ "name": "Gjevilvasshytta", "lat": 62.69847, "lon": 9.42003, "icon": "home" },
-		{ "name": "Vassendsetra", "lat": 62.71342, "lon": 9.19517, "icon": "home" },
-		{ "name": "Trollheimshytta", "lat": 62.82900, "lon": 9.23982, "icon": "home" },
-		{ "name": "Jøldalshytta", "lat": 62.86213, "lon": 9.50897, "icon": "home" }
+		{ "name": "Club Vista Serena", "lat": 27.76458, "lon": -15.58945, "icon": "home" },
+		{ "name": "Hotel Rural Molino de Agua", "lat": 27.89724, "lon": -15.56437, "icon": "home" },
+		{ "name": "Hotel Rural Las Tirajanas", "lat": 27.91952, "lon": -15.57409, "icon": "home" },
+		{ "name": "Stealth camp", "lat": 27.96837, "lon": -15.56947, "icon": "campground" },
+		{ "name": "Alojamientos Nicasio", "lat": 27.99660, "lon": -15.61538, "icon": "home" },
+		{ "name": "Hostal Rural Juncalillo", "lat": 28.03835, "lon": -15.64635, "icon": "home" },
+		{ "name": "Hotel Puerto de Las Nieves", "lat": 28.10264, "lon": -15.71046, "icon": "home" }
 	]
 }

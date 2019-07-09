@@ -41,10 +41,17 @@ function prepare_media() {
 			: # Do nothing
 		else
 			# Try to get GPS info directly from file exif info
-			latlon="$(exiftool -GPSPosition -s -s -s -c "%.6f" "$m" | sed 's/\ //g ; s/N// ; s/E// ; s/S// ; s/W//')"
+			latlon="$(exiftool -GPSPosition -s -s -s -c "%+.6f" "$m" | sed 's/\ //g ; s/N// ; s/S// ; s/\ //g')" # Perhaps a hack, but only need to track if E og W for lat, sed just gets rid of N and S from coordinates
 
 			lat="${latlon%,*}"
 			lon="${latlon#*,}"
+
+			# If lon is W then prefix it with -
+			#if [ "${lon: -1}" = "W" ]; then
+			#	lon="-${lon::-1}"
+			#elif [ "${lon: -1}" = "E" ]; then
+			#	lon="${lon::-1}"
+			#fi
 		fi
 
 		if [ "$lat" == "" -a "$lon" == "" ]; then
@@ -105,10 +112,12 @@ media_json="$(prepare_media)"
 # Optimize media files
 shopt -s nocaseglob # Enable case insensitive globbing
 # Reduce image size
-mogrify -resize 1920x1080\> "$dist_media_dir"/*.jpg
+mogrify -quiet -resize 1920x1080\> "$dist_media_dir"/*.jpg > /dev/null 2>&1
+mogrify -quiet -resize 1920x1080\> "$dist_media_dir"/*.jpeg > /dev/null 2>&1
 # Strip exif data
-exiftool -all= *.jpg
-exiftool -all= *.mov
+exiftool -q -all= *.jpg > /dev/null 2>&1
+exiftool -q -all= *.jpeg > /dev/null 2>&1
+exiftool -q -all= *.mov > /dev/null 2>&1
 shopt -u nocaseglob
 
 settings="$(<settings.json)"
@@ -205,12 +214,12 @@ new L.GPX(gpx, {async: true, polyline_options: {
 //https://github.com/xguaita/Leaflet.MapCenterCoord
 L.control.mapCenterCoord().addTo(map);
 
-var media = $media_json;
+var media_json = $media_json;
 
-for (var i = 0; i < media.length; i++) {
+for (var i = 0; i < media_json.length; i++) {
 
 	var thumbIcon = L.icon({
-		iconUrl: media[i]['thumb'],
+		iconUrl: media_json[i]['thumb'],
 		iconSize: [40, 40],
 		iconAnchor:   [20, 20], // point of the icon which will correspond to marker's location
 		shadowUrl: 'images/thumb-shadow.png',
@@ -219,17 +228,16 @@ for (var i = 0; i < media.length; i++) {
 	});
 
 	L.marker(
-		[media[i]['lat'], media[i]['lon']],
+		[media_json[i]['lat'], media_json[i]['lon']],
 		{icon: thumbIcon}
 	).addTo(media).on('click', function(e) {open_media(this);});
 }
 
 // Get click event and use onclick event to figure out what json src url to open based on thumbnail src url
 function open_media(obj){
-	for (var i = 0; i < media.length; i++) {
-		if(obj['_icon']['src'].endsWith(media[i]['thumb'])) {
-			//window.location = media[i]['src'];
-			window.open(media[i]['src']);
+	for (var i = 0; i < media_json.length; i++) {
+		if(obj['_icon']['src'].endsWith(media_json[i]['thumb'])) {
+			window.open(media_json[i]['src']);
 			break;
 		}
 	}
@@ -253,8 +261,8 @@ for (var i = 0; i < settings['markers'].length; i++) {
 }
 
 var baseMaps = {
-    "Topo": OpenTopoMap,
-    "Aerial": esriAerial
+	"Topo": OpenTopoMap,
+	"Aerial": esriAerial
 };
 
 var overlays = {
