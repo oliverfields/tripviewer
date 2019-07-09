@@ -1,6 +1,10 @@
 all_media
 dist
+media
 media_dev
 media_prod
+settings.json
+favicon.ico
+file_lat_lon.csv
 
 

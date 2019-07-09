@@ -1,7 +1,7 @@
 {
-	"page_title": "Trollheimen 2019",
-	"map_initial_latitude": 62.78300,
-	"map_initial_longitude": 9.31366,
+	"page_title": "Granka 2018",
+	"map_initial_latitude": 27.95589,
+	"map_initial_longitude": -15.58926,
 	"map_initial_zoom": 10,
 	"markers": [
 		{ "name": "Gjevilvasshytta", "lat": 62.69847, "lon": 9.42003, "icon": "home" },
