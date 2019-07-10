@@ -11,13 +11,8 @@ source_media_dir="$PWD/media"
 
 declare -A required_files
 required_files['settings']="settings.json"
-required_files['favicon']="favicon.ico"
 required_files['track']="track.gpx"
 required_files['gps_locations']="gps_locations_file_lat_lon.csv"
-
-
-
-
 
 # Check required files exist
 for i in "${!required_files[@]}"; do
@@ -38,7 +33,6 @@ cp -R "$lib_dir"/css "$dist_dir"/.
 cp -R "$lib_dir"/images "$dist_dir"/.
 cp track.gpx "$dist_dir"/.
 cp -R "$lib_dir"/webfonts "$dist_dir"/.
-cp favicon.ico "$dist_dir"/.
 
 mkdir "$dist_media_dir"
 mkdir "$dist_media_thumb_dir"
@@ -122,6 +116,16 @@ function prepare_media() {
 }
 
 page_title="$(grep '"page_title":' ${required_files["settings"]} | sed 's/",$// ; s/.*"//g')"
+title_image="$(grep '"title_image":' ${required_files["settings"]} | sed 's/",$// ; s/.*"//g')"
+
+#Create favicon & FB share html
+if [ -e "$source_media_dir/$title_image" ]; then
+	convert "$source_media_dir/$title_image" -set option:distort:viewport "%[fx:min(w,h)]x%[fx:min(w,h)]" -distort affine "%[fx:w>h?(w-h)/2:0],%[fx:w<h?(h-w)/2:0] 0,0" tmp_image
+	convert tmp_image -resize 32x32 "$dist_dir"/favicon.ico
+
+	fb_share_html="<meta property=\"og:title\" content=\"$page_title\">
+<meta property=\"og:image\" content=\"media/$title_image\">"
+fi
 
 media_json="$(prepare_media)"
 
@@ -152,6 +156,7 @@ cat <<PAGEHTML > "$dist_dir"/index.html
 	<head>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1">
+		$fb_share_html
 		<title>$page_title</title>
 		<link rel="shortcut icon" href="favicon.ico">
 
