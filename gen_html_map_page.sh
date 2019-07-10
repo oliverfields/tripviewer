@@ -2,32 +2,53 @@
 # Create web page for showing map with photo markers and gpx route
 
 # Settings
+lib_dir="$1"
 dist_dir='dist'
 dist_media_dir="$dist_dir/media"
 dist_media_thumb_dir="$dist_media_dir/thumbnails"
 thumbnail_size="40x40"
+source_media_dir="$PWD/media"
+
+declare -A required_files
+required_files['settings']="settings.json"
+required_files['favicon']="favicon.ico"
+required_files['track']="track.gpx"
+required_files['gps_locations']="gps_locations_file_lat_lon.csv"
+
+
+
+
+
+# Check required files exist
+for i in "${!required_files[@]}"; do
+	f="${required_files[$i]}"
+	[ ! -e "$f" ] && echo "Unable to find $f, initializing from '$lib_dir/$f'" && cp "$lib_dir/$f" "$f"
+done
+
+# Check media directory exists
+[ ! -d "$source_media_dir" ] && echo "Creating media directory" && mkdir "$source_media_dir"
 
 if [ -e "$dist_dir" ]; then
 	rm -Rf "$dist_dir"
 fi
+
 mkdir "$dist_dir"
-cp -R js "$dist_dir"/.
-cp -R css "$dist_dir"/.
-cp -R images "$dist_dir"/.
+cp -R "$lib_dir"/js "$dist_dir"/.
+cp -R "$lib_dir"/css "$dist_dir"/.
+cp -R "$lib_dir"/images "$dist_dir"/.
 cp track.gpx "$dist_dir"/.
-cp -R webfonts "$dist_dir"/.
+cp -R "$lib_dir"/webfonts "$dist_dir"/.
 cp favicon.ico "$dist_dir"/.
 
 mkdir "$dist_media_dir"
 mkdir "$dist_media_thumb_dir"
-
 
 # Create json and image files to use to add markers
 function prepare_media() {
 	json=""
 
 	# For media files get their location and create stuff for making markers
-	for m in media/*; do
+	for m in "$source_media_dir"/*; do
 		name="${m##*/}"
 		file_name="${name##.*}"
 		extension="${m##*.}"
@@ -36,7 +57,7 @@ function prepare_media() {
 		lon=""
 
 		# Get lat lon from file_lat_lon.csv if defined
-		IFS=',' read -r file lat lon <<<"$(grep "^$name," file_lat_lon.csv)"
+		IFS=',' read -r file lat lon <<<"$(grep "^$name," ${required_files["gps_locations"]})"
 		if [ "$lat" != "" -a "$lon" != "" ]; then
 			: # Do nothing
 		else
@@ -100,6 +121,8 @@ function prepare_media() {
 	echo "[$json]"
 }
 
+page_title="$(grep '"page_title":' ${required_files["settings"]} | sed 's/",$// ; s/.*"//g')"
+
 media_json="$(prepare_media)"
 
 # Create download archive
@@ -120,7 +143,7 @@ exiftool -q -all= *.jpeg > /dev/null 2>&1
 exiftool -q -all= *.mov > /dev/null 2>&1
 shopt -u nocaseglob
 
-settings="$(<settings.json)"
+settings="$(<${required_files["settings"]})"
 
 
 cat <<PAGEHTML > "$dist_dir"/index.html
@@ -129,7 +152,7 @@ cat <<PAGEHTML > "$dist_dir"/index.html
 	<head>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1">
-		<title>Trip viewer</title>
+		<title>$page_title</title>
 		<link rel="shortcut icon" href="favicon.ico">
 
 		<link rel="stylesheet" href="css/leaflet.css" />
@@ -171,7 +194,7 @@ display: none;
 		<script>
 
 var settings = $settings;
-document.title = settings['page_title'];
+//document.title = settings['page_title'];
 
 var OpenTopoMap = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
     maxZoom: 20,

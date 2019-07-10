@@ -1,0 +1,8 @@
+#!/bin/bash
+
+# Copy this file to somewhere on your path and update lib_dir to location of tripviewer library
+
+dir=$(dirname $(readlink -f $0)) # Get path for this file
+lib_dir="$dir"/tripviewerlib
+"$lib_dir"/gen_html_map_page.sh "$lib_dir"
+
