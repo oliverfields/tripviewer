@@ -183,6 +183,9 @@ position: absolute;
 #download_form {
 display: none;
 }
+.leaflet-marker-icon {
+border: solid 1px white;
+}
 		</style>
 	</head>
 	<body>
@@ -252,7 +255,7 @@ for (var i = 0; i < media_json.length; i++) {
 		iconAnchor:   [20, 20], // point of the icon which will correspond to marker's location
 		shadowUrl: 'images/thumb-shadow.png',
 		shadowSize:   [30, 22], // size of the shadow
-		shadowAnchor: [-5, 1],  // the same for the shadow
+		shadowAnchor: [-8, 0],  // the same for the shadow
 	});
 
 	L.marker(
