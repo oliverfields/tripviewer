@@ -40,6 +40,8 @@ mkdir "$dist_media_thumb_dir"
 # Create json and image files to use to add markers
 function prepare_media() {
 	json=""
+	total_files="$(ls -1 "$source_media_dir" | wc -l)"
+	progress_counter=1
 
 	# For media files get their location and create stuff for making markers
 	for m in "$source_media_dir"/*; do
@@ -49,6 +51,20 @@ function prepare_media() {
 		extension="${extension,,}" # convert to lower case
 		lat=""
 		lon=""
+
+		progress_percent="$(bc -l <<< "scale=2; $progress_counter/$total_files" | sed 's/^0\.//')"
+		progress_percent="${progress_percent:1}"
+		progress_percent="${progress_percent#0}"
+
+		if [ "$progress_counter" = "1" ]; then
+			progress_percent=0
+		fi
+		if [ "$progress_percent" = ".00" ]; then
+			progress_percent="100"
+		fi
+		#echo "$progress_percent% ($progress_counter / $total_files)" >&2
+		echo -ne "\e[0K\rProcessing media: $progress_percent% ($progress_counter/$total_files)" >&2
+		let "progress_counter++"
 
 		# Get lat lon from file_lat_lon.csv if defined
 		IFS=',' read -r file lat lon <<<"$(grep "^$name," ${required_files["gps_locations"]})"
@@ -96,10 +112,17 @@ function prepare_media() {
 			;;
 		esac
 
-		# Resize all thumbnails
-		for t in "$dist_media_thumb_dir/"*; do
-			convert "$t" -resize "$thumbnail_size^" -gravity center -crop $thumbnail_size+0+0 +repage "$t"
-		done
+
+
+		# Create thumbnail
+		convert "$dist_media_dir/$name" -resize "$thumbnail_size^" -gravity center -crop $thumbnail_size+0+0 +repage "$thumbnail_file"
+
+
+		# Optimize image for web viewing
+		mogrify -quiet -resize 1920x1080\> "$dist_media_dir/$name"
+
+		# Strip exif data
+		exiftool -q -overwrite_original -all= "$dist_media_dir/$name"
 
 		json="$json{"
 		json="${json}$latlon_json"
@@ -108,6 +131,8 @@ function prepare_media() {
 		json="$json},"
 
 	done
+
+	echo "" &>2 #New line after progress info
 
 	# Trim last comma [,]
 	json="${json%?}"
@@ -136,16 +161,6 @@ media_json="$(prepare_media)"
 #cd "$cwd"
 #mv "$dist_media_dir"/download.zip "$dist_dir"
 
-# Optimize media files
-shopt -s nocaseglob # Enable case insensitive globbing
-# Reduce image size
-mogrify -quiet -resize 1920x1080\> "$dist_media_dir"/*.jpg > /dev/null 2>&1
-mogrify -quiet -resize 1920x1080\> "$dist_media_dir"/*.jpeg > /dev/null 2>&1
-# Strip exif data
-exiftool -q -all= *.jpg > /dev/null 2>&1
-exiftool -q -all= *.jpeg > /dev/null 2>&1
-exiftool -q -all= *.mov > /dev/null 2>&1
-shopt -u nocaseglob
 
 settings="$(<${required_files["settings"]})"
 
