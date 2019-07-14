@@ -63,7 +63,7 @@ function prepare_media() {
 			progress_percent="100"
 		fi
 		#echo "$progress_percent% ($progress_counter / $total_files)" >&2
-		echo -ne "\e[0K\rProcessing media: $progress_percent% ($progress_counter/$total_files)" >&2
+		echo -ne "\e[0K\rProcessing: $progress_percent% ($progress_counter/$total_files): $name" >&2
 		let "progress_counter++"
 
 		# Get lat lon from file_lat_lon.csv if defined
@@ -76,13 +76,6 @@ function prepare_media() {
 
 			lat="${latlon%,*}"
 			lon="${latlon#*,}"
-
-			# If lon is W then prefix it with -
-			#if [ "${lon: -1}" = "W" ]; then
-			#	lon="-${lon::-1}"
-			#elif [ "${lon: -1}" = "E" ]; then
-			#	lon="${lon::-1}"
-			#fi
 		fi
 
 		if [ "$lat" == "" -a "$lon" == "" ]; then
@@ -99,6 +92,8 @@ function prepare_media() {
 				# Rotate according to exif info
 				exiftran -a -o "$dist_media_dir/$name" "$m"
 				cp "$dist_media_dir/$name" "$thumbnail_file"
+				# Optimize image for web viewing
+				mogrify -quiet -resize 1920x1080\> "$dist_media_dir/$name"
 			;;
 			mov|MOV|mp4|MP4)
 				cp "$m" "$dist_media_dir/"
@@ -115,11 +110,8 @@ function prepare_media() {
 
 
 		# Create thumbnail
-		convert "$dist_media_dir/$name" -resize "$thumbnail_size^" -gravity center -crop $thumbnail_size+0+0 +repage "$thumbnail_file"
+		convert "$thumbnail_file" -resize "$thumbnail_size^" -gravity center -crop $thumbnail_size+0+0 +repage "$thumbnail_file"
 
-
-		# Optimize image for web viewing
-		mogrify -quiet -resize 1920x1080\> "$dist_media_dir/$name"
 
 		# Strip exif data
 		exiftool -q -overwrite_original -all= "$dist_media_dir/$name"
@@ -132,7 +124,8 @@ function prepare_media() {
 
 	done
 
-	echo "" &>2 #New line after progress info
+	echo -e "\e[0K\rProcessing: 100%" >&2
+	echo "" >&2 #New line after progress info
 
 	# Trim last comma [,]
 	json="${json%?}"
@@ -143,16 +136,19 @@ function prepare_media() {
 page_title="$(grep '"page_title":' ${required_files["settings"]} | sed 's/",$// ; s/.*"//g')"
 title_image="$(grep '"title_image":' ${required_files["settings"]} | sed 's/",$// ; s/.*"//g')"
 
+media_json="$(prepare_media)"
+
 #Create favicon & FB share html
 if [ -e "$source_media_dir/$title_image" ]; then
-	convert "$source_media_dir/$title_image" -set option:distort:viewport "%[fx:min(w,h)]x%[fx:min(w,h)]" -distort affine "%[fx:w>h?(w-h)/2:0],%[fx:w<h?(h-w)/2:0] 0,0" tmp_image
+
+	exiftran -a -o tmp_image "$source_media_dir/$title_image" # Rotate by exif
+	convert tmp_image -set option:distort:viewport "%[fx:min(w,h)]x%[fx:min(w,h)]" -distort affine "%[fx:w>h?(w-h)/2:0],%[fx:w<h?(h-w)/2:0] 0,0" tmp_image
 	convert tmp_image -resize 32x32 "$dist_dir"/favicon.ico
+	rm tmp_image
 
 	fb_share_html="<meta property=\"og:title\" content=\"$page_title\">
 <meta property=\"og:image\" content=\"media/$title_image\">"
 fi
-
-media_json="$(prepare_media)"
 
 # Create download archive
 #cwd="$PWD"
